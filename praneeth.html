@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" 
+integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+ integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<style type="text/css">
+/*#add-btn{position:absolute; margin-bottom:30px;}	
+#del-btn{margin-left:150px; margin-top:20px;}*/
+</style>
+<script language="javascript">
+$(function() {
+	var tempdata;
+	var UsersData;
+	$.ajax({
+		url:"https://api.mlab.com/api/1/databases/expenses/collections/userdetails/?apiKey=oKLzqjAY8jvb_cC-YaagRHVRUUu-ADEy",
+		type:"GET",
+		success:function(userdata)
+		{
+			tempdata = [];
+			for (var i=0; i< userdata.length;i++)
+			{
+			user = [];	
+			user.push(userdata[i]["Name"]);
+			user.push(0);
+			tempdata.push(user);
+			UsersData =  userdata;
+			}
+
+			//var tempdata = userdata[0]["Name"];
+			$("#usersTable").DataTable({
+				data:UsersData,
+				"paging": false,
+				columns:[
+				{
+				"data":"UsersData",
+				render: function(data, type,row,meta){
+				
+				   return  row["Name"];
+				}
+				},
+							{
+				"data":"userdata",
+				render: function(data, type,row,meta){
+				 console.log(row._id.$oid);
+				   return  '<input type="Number" class="spent-box" value="0" data-keyid ="' + row._id.$oid +  '"> </input>';
+				}
+				},
+				{
+				"data":"userdata",
+				render: function(data, type,row,meta){
+				 
+				   return  '<input type="Number" class="balance-box"> </input>';
+				}
+				},
+				
+				
+				{
+				"data":"userdata",
+				render: function(data, type,row,meta){
+				 
+				   return  '<button class="btn-primary btn del-usr-btn"> Delete User </button>';
+				}
+				}
+				
+				
+				],
+				});
+			
+		}
+		})
+   	
+  	});
+	
+	$(document).on('click', '#add-usr-btn',function(){
+	
+	if($('#new-usr-form').hasClass('hide'))
+	{
+	$('#new-usr-form').removeClass('hide')
+	}
+	
+	})
+	
+	$(document).on('keyup','.spent-box', function () {
+	
+	var amounts = $('.spent-box');
+	var total = 0;	
+	$(amounts).each(function(idx,elem){
+     total = total + parseInt($(elem).val());	
+	});
+		$('#total-purchase').val(total);
+	});
+	
+	$(document).on('click','.balance-box',function(){
+	
+	});
+	
+	$(document).on('keyup','#rent', function() {
+   var users = $('.spent-box');     
+	 var grandtotal =	 parseInt($('#total-purchase').val()) + parseInt($('#rent').val())
+	 $('#grand-total').val(grandtotal) ;
+	 var numofUsers = users.length;
+	 var avgerageexp = parseFloat(grandtotal/numofUsers).toFixed(2);
+	 $('#avg-exp').val(avgerageexp); 
+	 users.each(function(idx,elem){
+	 var balelem = $($(elem).parent()).next().find('.balance-box');
+	 var spent = $(elem).val();
+	 var balval = avgerageexp - spent;
+	 $(balelem).val(balval);	 
+	 })
+	});
+	
+	$(document).on('click','#usr-submit',function(evt) {
+	//evt.preventDefault();
+   var usrName = $("#new-user-name").val();
+   var dataobj = {Name:usrName};
+   var dat = JSON.stringify(dataobj)
+      $.ajax({
+	  url:"https://api.mlab.com/api/1/databases/expenses/collections/userdetails/?apiKey=oKLzqjAY8jvb_cC-YaagRHVRUUu-ADEy",
+	  type:"POST",
+	  data: dat,
+	  contentType: "application/json",
+	  success : function(data){
+	  console.log("success");
+	  },
+	  error: function(err,status,thr){
+	  console.log(err);
+	  console.log(status);
+	  console.log(thr);
+	  }
+	  });
+	  })
+	  
+	  $(document).on('click','.del-usr-btn',function(evt) {
+		  
+		 // var idnum=input.getAttribute('data-keyid');
+		  
+    //thisdata = $('input').data('keyid');
+  // console.log($($(this).parent().prev().prev().children()[0]).data('keyid'));
+   
+   var keyid = $($(this).parent().prev().prev().children()[0]).data('keyid') ;
+		  
+		   $.ajax({
+			  	url:"https://api.mlab.com/api/1/databases/expenses/collections/userdetails/" + keyid + "?apiKey=oKLzqjAY8jvb_cC-YaagRHVRUUu-ADEy",
+			  	type:'DELETE',
+			  	success : function( data) {
+					  console.log('success');
+				   },
+				  error : function() {
+					console.log('error');
+     			 }
+			  
+			  }); 
+		  })
+   
+
+	
+	
+	
+	
+	
+</script>
+</head>
+
+<body>
+<div class="container">
+	
+     
+     <table id="usersTable" border="1px solid black">
+     <thead> 
+    <tr> <th>Name</th>
+    <th>Spent</th>
+	<th>Balance</th>
+    <th></th>
+    </tr>
+    </thead>
+    <tbody>
+            <tr>
+            	<td>Row 1 Data 1</td>
+            	<td>Row 1 Data 2</td>      
+             	<td>Row 1 Data 3</td>
+                <td>Row 1 Data 4</td>
+        </tr>
+        <tr>
+            <td>Row 2 Data 1</td>
+             <td>Row 2 Data 2</td>
+             <td>Row 2 Data 3</td>
+             <td>Row 2 Data 4</td>          
+        </tr>
+		
+     </tbody>
+     </table>
+     
+	 <div class="row" style="margin-top:10px">
+	 <div class="col-sm-2"><Label>Total Purchase</label> </div>
+	 	 <div class="col-sm-4"><input id="total-purchase" type="Number" value="0"></input> </div>
+	 </div>
+	 	 <div class="row" style="margin-top:10px">
+	 <div class="col-sm-2"><Label>Rent</label> </div>
+	 	 <div class="col-sm-4"><input id="rent" type="Number" value="0" ></input> </div>
+	 </div>
+	 	 <div class="row" style="margin-top:10px">
+	 <div class="col-sm-2"><Label>Average Expenditure</label> </div>
+	 	 <div class="col-sm-4"><input id="avg-exp" type="Number" value="0"></input> </div>
+	 </div>
+	 	 <div class="row" style="margin-top:10px">
+	 <div class="col-sm-2"><Label>Grand Total</label> </div>
+	 	 <div class="col-sm-4"><input id="grand-total" type="Number" value="0"></input> </div>
+	 </div>
+	 
+	 <div class="row" style="margin-top:20px" id="add-btn">
+	     <button class="btn-primary btn" id="add-usr-btn">Add New User </button>
+	 </div>
+     
+	 <div class="row hide" id="new-usr-form">
+	 <form>
+	 <div class="row">
+	 <div class="form-group col-sm-4">
+	 <label for="new-user-name">User Name </label>
+	 <input class="form-control" id="new-user-name"  placeholder="Enter User Name"> </input>
+	 </div>
+	 </div>
+	 </form>
+	 	 <div class="row">
+	  <button id="usr-submit" class="btn btn-primary">Submit</button>
+	 </div>
+	 </div>
+    
+	</div>	
+   
+</body>
+</html>
